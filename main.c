@@ -95,12 +95,10 @@ int main(int argc, char **argv) {
                 printHelp();
                 exit(EXIT_SUCCESS);
             case 'd':
-                directory = malloc(strlen(optarg) + 1);
-                strncpy(directory, optarg, strlen(optarg) + 1);
+                directory = optarg;
                 break;
             case 'f':
-                file = malloc(strlen(optarg) + 1);
-                strncpy(file, optarg, strlen(optarg) + 1);
+                file = optarg;
                 break;
             case ':':
                 printf("Option needs a value\n");
@@ -115,10 +113,9 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (directory && file) {
+    if (file && strlen(file) > 0) {
         verifyFile(directory, file);
-    }
-    if (directory) {
+    } else {
         signatureBasedTraversePathScan(directory);
     }
 
