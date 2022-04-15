@@ -22,8 +22,20 @@
 #define GREEN_ANSI "\033[0;32m"
 #define DEFAULT_COLOR_ANSI "\033[0m"
 
-
 uint8_t malwareHashes[MALWARE_DATA_COUNT][SHA256_DIGEST_LENGTH];
+
+void printHelp() {
+    printf("tulware scanner.\n"
+           "\n"
+           "Usage:\n"
+           "  tulware-scanner -d <directory> [-f <file>]\n"
+           "  tulware-scanner -h\n"
+           "\n"
+           "Options:\n"
+           "  -h                Show this screen.\n"
+           "  -d <directory>    Directory path to scan. [default=\"./\"]\n"
+           "  -f <file>         File to scan\n");
+}
 
 void readMalwareHashes() __attribute__((constructor));
 
@@ -72,12 +84,44 @@ void setupQuarantineDirectory() {
     }
 }
 
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("Specify path you want to scan");
-        exit(EXIT_FAILURE);
+int main(int argc, char **argv) {
+    char *directory = "./";
+    char *file = NULL;
+    int c;
+
+    while ((c = getopt(argc, argv, "hd:f:")) != -1) {
+        switch (c) {
+            case 'h':
+                printHelp();
+                exit(EXIT_SUCCESS);
+            case 'd':
+                directory = malloc(strlen(optarg) + 1);
+                strncpy(directory, optarg, strlen(optarg) + 1);
+                break;
+            case 'f':
+                file = malloc(strlen(optarg) + 1);
+                strncpy(file, optarg, strlen(optarg) + 1);
+                break;
+            case ':':
+                printf("Option needs a value\n");
+                break;
+            case '?':
+                printf("Unknown option: %c\n"
+                       "See available options in help (-h) menu.", optopt);
+                break;
+            default:
+                printHelp();
+                exit(EXIT_FAILURE);
+        }
     }
-    signatureBasedTraversePathScan(argv[1]);
+
+    if (directory && file) {
+        verifyFile(directory, file);
+    }
+    if (directory) {
+        signatureBasedTraversePathScan(directory);
+    }
+
     return EXIT_SUCCESS;
 }
 
