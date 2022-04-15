@@ -25,7 +25,7 @@
 uint8_t malwareHashes[MALWARE_DATA_COUNT][SHA256_DIGEST_LENGTH];
 
 void printHelp() {
-    printf("tulware scanner.\n"
+    printf("tulware scanner\n"
            "\n"
            "Usage:\n"
            "  tulware-scanner -d <directory> [-f <file>]\n"
