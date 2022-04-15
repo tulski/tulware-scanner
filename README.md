@@ -5,11 +5,9 @@
   Prosty Antywirus dla systemu z jądrem Linux
 </p>
 
-{% note %}
+![ELO](https://img.shields.io/badge/!-IMPORTANT!-red)
 
 **DISCLAIMER**: This software is for educational purposes only. The author is not responsible for its use. It's a very simple software created as a project for a university.
-
-{% endnote %}
 
 # Założenia
 
