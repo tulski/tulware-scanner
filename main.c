@@ -13,7 +13,7 @@
 #define MALWARE_DATA_FILENAME "malware.data"
 #define MALWARE_DATA_COUNT 3
 
-#define QUARANTINE_DIR "/var/tmp/tulus-quarantine"
+#define QUARANTINE_DIR "/var/tmp/tulware-quarantine"
 
 #define DEBUG 1
 #define VERBOSE 1
