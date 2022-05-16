@@ -46,7 +46,7 @@ void signatureBasedTraversePathScan(char *path);
 
 int isRelevantFileName(char *fileName);
 
-void pathConcat(char *path1, char *path2, char *outputPath);
+void concat(char *path1, char *path2, char *outputPath);
 
 void verifyFile(char *directoryPath, char *fileName);
 
@@ -65,12 +65,19 @@ void printHash(unsigned char *hash);
 void readMalwareHashes() {
     FILE *file = fopen(MALWARE_DATA_FILENAME, "rb");
 
-    if (!file) {
-        printf("Error while reading file content: %s", MALWARE_DATA_FILENAME);
+    if (file == NULL) {
+        printf("Could not open file %s\n", MALWARE_DATA_FILENAME);
         exit(EXIT_FAILURE);
     }
 
-    fread(&malwareHashes, sizeof(uint8_t) * SHA256_DIGEST_LENGTH, MALWARE_DATA_COUNT, file);
+    for (int i = 0; i < MALWARE_DATA_COUNT; i++) {
+        fread(malwareHashes[i], 1, SHA256_DIGEST_LENGTH, file);
+        if (ferror(file)) {
+            printf("Error while reading file content: %s", MALWARE_DATA_FILENAME);
+            exit(EXIT_FAILURE);
+        }
+    }
+
     fclose(file);
 }
 
@@ -128,8 +135,9 @@ void signatureBasedTraversePathScan(char *basePath) {
     struct dirent *nextDirectory;
     DIR *directory = opendir(basePath);
 
-    if (!directory) {
-        return;
+    if (directory == NULL) {
+        printf("Could not open directory %s\n", basePath);
+        exit(EXIT_FAILURE);
     }
 
     while ((nextDirectory = readdir(directory)) != NULL) {
@@ -138,7 +146,7 @@ void signatureBasedTraversePathScan(char *basePath) {
                 verifyFile(basePath, nextDirectory->d_name);
             }
 
-            pathConcat(path, basePath, nextDirectory->d_name);
+            concat(path, basePath, nextDirectory->d_name);
             signatureBasedTraversePathScan(path);
         }
     }
@@ -153,9 +161,29 @@ int isRelevantFileName(char *filename) {
     return 1;
 }
 
-void pathConcat(char *outputPath, char *path1, char *path2) {
-    strcpy(outputPath, path1);
-    strcat(outputPath, PATH_SEPARATOR);
+void concat(char *outputPath, char *path1, char *path2) {
+    unsigned long path1Length = strlen(path1);
+    unsigned long path2Length = strlen(path2);
+
+    if (path1Length + path2Length + 1 > PATH_MAX_LENGTH) {
+        printf("Concatenated path is too long. \n"
+               "Maximum length is %d characters \n"
+               "Concat components: %s, %s\n", PATH_MAX_LENGTH, path1, path2);
+        exit(EXIT_FAILURE);
+    }
+
+    if (strlen(path2) == 0) {
+        strcpy(outputPath, path1);
+        return;
+    }
+
+    if (path1[path1Length- 1] != PATH_SEPARATOR[0]) {
+        strcpy(outputPath, path1);
+        strcat(outputPath, PATH_SEPARATOR);
+    } else {
+        strcpy(outputPath, path1);
+    }
+
     strcat(outputPath, path2);
 }
 
@@ -163,7 +191,7 @@ void verifyFile(char *directoryPath, char *fileName) {
     char filePath[PATH_MAX_LENGTH];
     unsigned char hash[SHA256_DIGEST_LENGTH];
 
-    pathConcat(filePath, directoryPath, fileName);
+    concat(filePath, directoryPath, fileName);
     calculateFileHash(hash, filePath);
 
     int isKnownHash = isKnownMalwareHash(hash);
@@ -182,10 +210,17 @@ void calculateFileHash(uint8_t *hash, char *filepath) {
     SHA256_CTX hashContext;
     size_t bytes;
 
+    struct stat fileStat;
+    stat(filepath, &fileStat);
+    if (S_ISCHR(fileStat.st_mode) || S_ISBLK(fileStat.st_mode)) {
+        printf("%s is a special file. Skipping.", filepath);
+        return;
+    }
+
     FILE *file = fopen(filepath, "rb");
 
     if (!file) {
-        printf("Error while reading file content: %s", filepath);
+        printf("Error while reading file content: %s\n", filepath);
         exit(EXIT_FAILURE);
     }
 
@@ -212,17 +247,22 @@ void quarantineFile(char *filePath, char *fileName) {
     buildQuarantineFilePath(destinationFilePath, fileName);
 
     if (rename(filePath, destinationFilePath)) {
-        printf("Error occurred while moving file to quarantine.");
+        printf("Error occurred while moving file to quarantine.\n"
+               "File: %s\n"
+               "Destination: %s\n", filePath, destinationFilePath);
         exit(EXIT_FAILURE);
     }
 
     if (chmod(destinationFilePath, 0) != 0) {
-        printf("Error occurred while changing quarantined file mode");
+        printf("Error occurred while changing quarantined file mode\n"
+               "File: %s\n", destinationFilePath);
         exit(EXIT_FAILURE);
     }
 
     if (symlink(destinationFilePath, filePath) < 0) {
-        printf("Error occurred while creating symlink to quarantined file");
+        printf("Error occurred while creating symlink to quarantined file\n"
+               "File: %s\n"
+               "Destination: %s\n", filePath, destinationFilePath);
         exit(EXIT_FAILURE);
     }
 }
@@ -230,7 +270,7 @@ void quarantineFile(char *filePath, char *fileName) {
 void buildQuarantineFilePath(char *outputPath, char *fileName) {
     char quarantineFileName[PATH_MAX_LENGTH];
     snprintf(quarantineFileName, sizeof quarantineFileName, "%ld_%s", (long) time(NULL), fileName);
-    pathConcat(outputPath, QUARANTINE_DIR, quarantineFileName);
+    concat(outputPath, QUARANTINE_DIR, quarantineFileName);
 }
 
 void scanDebugLog(uint8_t *hash, int isKnownHash, char *filePath) {

@@ -122,11 +122,3 @@ Process 89582: 0 leaks for 0 total leaked bytes.
 ```
 
 Przy użyciu kilku narzędzi analizowałem kod pod kątem potencjalnych wycieków pamięci. Nie udało mi się żadnego znaleźć.
-
-# Plan rozwoju
-
-- [ ]  Szyfrowanie potencjalnie niebezpiecznego pliku przy przenoszeniu do kwarantanny
-- [ ]  Obsługa linków symbolicznych do plików przy skanowaniu katalogów
-- [ ]  Lepsza obsługa błędów
-- [ ]  Obsługa niepoprawnego formatu ścieżki podanego przez użytkownika
-- [ ]  Poprawa funkcji `pathConcat` żeby mogła dynamicznie manipulować separatorami */*
