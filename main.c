@@ -228,7 +228,7 @@ void quarantineFile(char *filePath, char *fileName) {
 }
 
 void buildQuarantineFilePath(char *outputPath, char *fileName) {
-    char quarantineFileName[__DARWIN_MAXNAMLEN];
+    char quarantineFileName[PATH_MAX_LENGTH];
     snprintf(quarantineFileName, sizeof quarantineFileName, "%ld_%s", (long) time(NULL), fileName);
     pathConcat(outputPath, QUARANTINE_DIR, quarantineFileName);
 }
