@@ -9,6 +9,7 @@
 
 
 #define PATH_SEPARATOR "/"
+#define PATH_MAX_LENGTH 1024
 
 #define MALWARE_DATA_FILENAME "malware.data"
 #define MALWARE_DATA_COUNT 3
@@ -123,7 +124,7 @@ int main(int argc, char **argv) {
 }
 
 void signatureBasedTraversePathScan(char *basePath) {
-    char path[__DARWIN_MAXPATHLEN];
+    char path[PATH_MAX_LENGTH];
     struct dirent *nextDirectory;
     DIR *directory = opendir(basePath);
 
@@ -159,7 +160,7 @@ void pathConcat(char *outputPath, char *path1, char *path2) {
 }
 
 void verifyFile(char *directoryPath, char *fileName) {
-    char filePath[__DARWIN_MAXPATHLEN];
+    char filePath[PATH_MAX_LENGTH];
     unsigned char hash[SHA256_DIGEST_LENGTH];
 
     pathConcat(filePath, directoryPath, fileName);
@@ -207,7 +208,7 @@ int isKnownMalwareHash(uint8_t *fileHash) {
 }
 
 void quarantineFile(char *filePath, char *fileName) {
-    char destinationFilePath[__DARWIN_MAXPATHLEN];
+    char destinationFilePath[PATH_MAX_LENGTH];
     buildQuarantineFilePath(destinationFilePath, fileName);
 
     if (rename(filePath, destinationFilePath)) {
